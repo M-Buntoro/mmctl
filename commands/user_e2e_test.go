@@ -140,7 +140,7 @@ func (s *MmctlE2ETestSuite) TestSearchUserCmd() {
 func (s *MmctlE2ETestSuite) TestDeleteAllUserCmd() {
 	s.SetupTestHelper().InitBasic()
 
-	s.Run("Delete all user  as unpriviliged user", func() {
+	s.Run("Delete all user as unpriviliged user", func() {
 		printer.Clean()
 
 		cmd := &cobra.Command{}
@@ -153,8 +153,12 @@ func (s *MmctlE2ETestSuite) TestDeleteAllUserCmd() {
 		s.Len(printer.GetErrorLines(), 0)
 
 		// expect users not deleted
-		_, err = s.th.App.GetUser(s.th.BasicUser2.Id)
+		users, err := s.th.App.GetUsers(&model.UserGetOptions{
+			Page:    0,
+			PerPage: 10,
+		})
 		s.Require().Nil(err)
+		s.Require().NotZero(len(users))
 	})
 
 	s.Run("Delete all user as system admin", func() {
@@ -170,8 +174,12 @@ func (s *MmctlE2ETestSuite) TestDeleteAllUserCmd() {
 		s.Len(printer.GetErrorLines(), 0)
 
 		// expect users not deleted
-		_, err = s.th.App.GetUser(s.th.BasicUser2.Id)
+		users, err := s.th.App.GetUsers(&model.UserGetOptions{
+			Page:    0,
+			PerPage: 10,
+		})
 		s.Require().Nil(err)
+		s.Require().NotZero(len(users))
 	})
 
 	s.Run("Delete all user", func() {
@@ -181,6 +189,7 @@ func (s *MmctlE2ETestSuite) TestDeleteAllUserCmd() {
 		confirm := true
 		cmd.Flags().BoolVar(&confirm, "confirm", confirm, "confirm")
 
+		// delete all users only works on local mode
 		err := deleteAllUsersCmdF(s.th.LocalClient, cmd, []string{})
 		s.Require().Nil(err)
 		s.Len(printer.GetLines(), 1)
@@ -188,7 +197,11 @@ func (s *MmctlE2ETestSuite) TestDeleteAllUserCmd() {
 		s.Require().Equal(printer.GetLines()[0], "All users successfully deleted")
 
 		// expect users deleted
-		_, err = s.th.App.GetUser(s.th.BasicUser.Id)
-		s.Require().NotNil(err)
+		users, err := s.th.App.GetUsers(&model.UserGetOptions{
+			Page:    0,
+			PerPage: 10,
+		})
+		s.Require().Nil(err)
+		s.Require().Zero(len(users))
 	})
 }
